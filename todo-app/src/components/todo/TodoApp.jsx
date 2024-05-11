@@ -1,76 +1,46 @@
-import './TodoApp.css'
-import {useState} from "react";
+import './style/TodoApp.css'
+import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom"
+import LogoutComponent from './LogoutComponent'
+import FooterComponent from './FooterComponent'
+import {ErrorComponent} from "./ErrorComponent";
+import {HeaderComponent} from "./HeaderComponent";
+import {ListTodosComponent} from "./ListTodosComponent";
+import {WelcomeComponent} from "./WelcomeComponent";
+import {LoginComponent} from "./LoginComponent";
+import AuthProvider, {useAuth} from "./security/AuthContext";
+
+
+function AuthenticatedRoute({children}) {
+    const authContext = useAuth()
+    if (authContext.isAuthenticated){
+        return children
+    }
+    return <Navigate to="/"/>
+
+}
 
 export default function TodoApp() {
     return (
         <div className="TodoApp">
-            Todo Management Application
-            <LoginComponent/>
-            {/*<WelcomeComponent/>*/}
+            <AuthProvider>
+                <BrowserRouter>
+                    <HeaderComponent/>
+                    <Routes>
+                        <Route path='/' element={<LoginComponent/>}/>
+                        <Route path='/login' element={<LoginComponent/>}/>
+
+                        <Route path='/welcome/:username' element={<AuthenticatedRoute><WelcomeComponent/></AuthenticatedRoute>}/>
+                        <Route path='/todos' element={<AuthenticatedRoute><ListTodosComponent/></AuthenticatedRoute>}/>
+                        <Route path='/logout' element={<AuthenticatedRoute><LogoutComponent/></AuthenticatedRoute>}/>
+
+                        <Route path='*' element={<AuthenticatedRoute><ErrorComponent/></AuthenticatedRoute>}/>
+                    </Routes>
+                    <FooterComponent/>
+                </BrowserRouter>
+            </AuthProvider>
         </div>
     )
 
 }
 
 
-
-function LoginComponent() {
-
-    const defaultUsername = "Tony"
-
-    const [username, setUsername] = useState(defaultUsername)
-    const [password, setPassword] = useState("")
-
-    const [showSuccessMessage, setShowSuccessMessage] = useState(false)
-    const [showErrorMessage, setShowErrorMessage] = useState(false)
-
-    // Walk-around for Dom editing itself and Virtual Dom editing Dom - concurrent modification (sort of)
-    function usernameChanged(event) {
-        setUsername(event.target.value)
-    }
-
-    function passwordChanged(event) {
-        setPassword(event.target.value)
-    }
-
-    function submitAction() {
-        if (username === 'Tony' && password === '1234') {
-            setShowSuccessMessage(true);
-            setShowErrorMessage(false);
-        } else {
-            setShowSuccessMessage(false);
-            setShowErrorMessage(true);
-        }
-    }
-
-    return (
-        <div className="Login">
-
-            {showSuccessMessage && <div className="SuccessMessage" hidden={!showSuccessMessage}>Authenticated Successfully</div>}
-            <div className="ErrorMessage" hidden={!showErrorMessage} >Authentication Failed. Please check the credentials!</div>
-
-
-            <form className="LoginForm">
-                <div>
-                    <label>Username:</label>
-                    <input type="text" name="username" value={username} onChange={usernameChanged} />
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input type="password" name="password" value={password} onChange={passwordChanged} />
-                </div>
-                <div>
-                    <button type="button" name="login" onClick={submitAction}>Login</button>
-                </div>
-            </form>
-        </div>
-    )
-}
-
-function WelcomeComponent() {
-    return (
-        <div className="WelcomeComponent">
-            Welcome Component
-        </div>
-    )
-}
